@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity =0.8.18; // define specific pragma
+pragma solidity =0.8.19; // define specific pragma
 
 import "./types/ERC20.sol";
 import "./libraries/EnumerableSet.sol";
@@ -24,11 +24,23 @@ contract AiTomToken is ERC20, Ownable {
     event RemoveRecipientWhitelist(address indexed account);
     event AddTeamlist(address indexed account);
     event RemoveTeamlist(address indexed account);
+    event SetOperator(address indexed account);
+    event SetEcologicalPromoter(address indexed account);
+    event SetProductMaintenance(address indexed account);
+    event SetInsuredPool(address indexed account);
+    event SetTaxRate(uint256 rate);
+    event SetRate(uint256 eRate, uint256 pRate, uint256 iRate);
+    event AddOremoveTeamlist(address[] accounts, bool isAdd);
+    event AddTTeamlist(address[] accounts);
+    event RemoveTeamlist(address[] accounts);
+    event AddOremoveSenderWhitelist(address[] accounts, bool isAdd);
+    event AddOremoveRecipientWhitelist(address[] accounts, bool isAdd);
+    event Burn(address sender, uint256 amount);
 
     using EnumerableSet for EnumerableSet.AddressSet;
-    EnumerableSet.AddressSet private senderWhitelist; //need to be private not internal
-    EnumerableSet.AddressSet private recipientWhitelist; //need to be private not internal
-    EnumerableSet.AddressSet private teamlist; //need to be private not internal
+    EnumerableSet.AddressSet private senderWhitelist;
+    EnumerableSet.AddressSet private recipientWhitelist;
+    EnumerableSet.AddressSet private teamlist;
 
     address public ecologicalPromoter;
     address public productMaintenance;
@@ -64,31 +76,31 @@ contract AiTomToken is ERC20, Ownable {
     function setOperator(address op) external onlyOwner {
         //missing required function.
         operator = op;
-        //missing emit
+        emit SetOperator(op);
     }
 
     function setEcologicalPromoter(address ecologicalPromoter_) external onlyPolicy {
         require(ecologicalPromoter_ != address(0),"address err");
         ecologicalPromoter = ecologicalPromoter_;
-        //missing emit
+        emit SetEcologicalPromoter(ecologicalPromoter_);
     }
 
     function setProductMaintenance(address productMaintenance_) external onlyPolicy {
         //missing required function
         productMaintenance = productMaintenance_;
-        //missing emit
+        emit SetProductMaintenance(productMaintenance_);
     }
 
     function setInsuredPool(address insuredPool_) external onlyPolicy {
         require(insuredPool_ != address(0), "address err");
         insuredPool = insuredPool_;
-        //missing emit
+        emit SetInsuredPool(insuredPool_);
     }
 
     function setTaxRate(uint256 rate) external onlyPolicy {
         require(rate < baseRate && rate <= maxRate, "rate err");
         taxRate = rate;
-        //missing emit
+        emit SetTaxRate(rate);
     }
 
     function setRate(uint256 eRate, uint256 pRate, uint256 iRate) external onlyPolicy {
@@ -97,7 +109,7 @@ contract AiTomToken is ERC20, Ownable {
         ecologicalPromoterRate = eRate;
         productMaintenanceRate = pRate;
         insuredPoolRate = iRate;
-        //missing emit
+        emit SetRate(eRate, pRate,iRate);
     }
 
 
@@ -108,7 +120,7 @@ contract AiTomToken is ERC20, Ownable {
         } else {
             removeTeamlist(accounts);
         }
-        //missing emit
+        emit AddOremoveTeamlist(accounts, isAdd);
     }
 
     function addTTeamlist(address[] memory accounts) internal {
@@ -118,6 +130,7 @@ contract AiTomToken is ERC20, Ownable {
                 emit AddTeamlist(accounts[i]);
             }
         }
+        emit AddTTeamlist(accounts);
     }
 
     function removeTeamlist(address[] memory accounts) internal  {
@@ -127,6 +140,7 @@ contract AiTomToken is ERC20, Ownable {
                 emit RemoveTeamlist(accounts[i]);
             }
         }
+        emit RemoveTeamlist(accounts);
     }
 
 
@@ -137,8 +151,7 @@ contract AiTomToken is ERC20, Ownable {
         } else {
             removeSenderWhitelist(accounts);
         }
-
-        //missing emit, even if the add and remove have one include one here as well.
+        emit AddOremoveSenderWhitelist(accounts, isAdd);
     }
 
     function addSenderWhitelist(address[] memory accounts) internal {
@@ -169,7 +182,7 @@ contract AiTomToken is ERC20, Ownable {
         } else {
             removeRecipientWhitelist(accounts);
         }
-        //missing emit from main function
+        emit AddOremoveRecipientWhitelist(accounts, isAdd);
     }
 
     function addRecipientWhitelist(address[] memory accounts) internal {
@@ -254,6 +267,7 @@ contract AiTomToken is ERC20, Ownable {
 
     function burn(uint256 amount) external override {
         _burn(msg.sender, amount);
+        emit Burn(msg.sender, amount);
     }
     
     function getSenderWhitelistNum() external view returns(uint256) {

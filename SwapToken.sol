@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.18;
+pragma solidity =0.8.19;
 pragma experimental ABIEncoderV2;
 
 import "./types/Ownable.sol";
