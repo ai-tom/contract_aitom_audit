@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 
 import "./types/ERC20.sol";
-import "./libraries/SafeMath.sol";
 import "./libraries/EnumerableSet.sol";
 import "./types/Ownable.sol";
 
@@ -26,7 +25,6 @@ contract AiTomToken is ERC20, Ownable {
     event AddTeamlist(address indexed account);
     event RemoveTeamlist(address indexed account);
 
-    using SafeMath for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet senderWhitelist;
     EnumerableSet.AddressSet recipientWhitelist;
@@ -38,6 +36,7 @@ contract AiTomToken is ERC20, Ownable {
     address public operator;
     uint256 public baseRate = 10000;
     uint256 public taxRate = 1000;
+    uint256 public constant maxRate = 1500;
 
     uint256 public ecologicalPromoterRate = 3000;
     uint256 public productMaintenanceRate = 3000;
@@ -81,12 +80,12 @@ contract AiTomToken is ERC20, Ownable {
     }
 
     function setTaxRate(uint256 rate) external onlyPolicy {
-        require(rate < baseRate, "rate err");
+        require(rate < baseRate && rate <= maxRate, "rate err");
         taxRate = rate;
     }
 
     function setRate(uint256 eRate, uint256 pRate, uint256 iRate) external onlyPolicy {
-        require(eRate.add(pRate).add(iRate) == baseRate, "rate err");
+        require((eRate + pRate+ iRate) == baseRate, "rate err");
 
         ecologicalPromoterRate = eRate;
         productMaintenanceRate = pRate;
@@ -197,10 +196,10 @@ contract AiTomToken is ERC20, Ownable {
             (senderWhitelist.contains(sender) || recipientWhitelist.contains(recipient)) && 
             taxRate != 0)
         {
-            uint256 value = amount.mul(taxRate).div(baseRate);
-            uint256 eAmount = value.mul(ecologicalPromoterRate).div(baseRate);
-            uint256 pAmount = value.mul(productMaintenanceRate).div(baseRate);
-            uint256 iAmount = value.sub(eAmount).sub(pAmount);
+            uint256 value = amount * taxRate / baseRate;
+            uint256 eAmount = value * ecologicalPromoterRate / baseRate;
+            uint256 pAmount = value * productMaintenanceRate / baseRate;
+            uint256 iAmount = value - eAmount - pAmount;
 
             _transfer(sender, recipient, amount);
 
@@ -219,7 +218,7 @@ contract AiTomToken is ERC20, Ownable {
                     _transfer(sender, productMaintenance, pAmount);
                 } else {
                     _transfer(sender, address(this), pAmount);
-                    productBurn = productBurn.add(pAmount);
+                    productBurn = productBurn + pAmount;
                     _burn(address(this), pAmount);
                 }
             }

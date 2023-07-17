@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 
 import "./ERC721.sol";
 import "./ERC721Enumerable.sol";
 import "./Ownable.sol";
-import "../libraries/SafeMath.sol";
 import "../libraries/Strings.sol";
 
 import "./ContentMixin.sol";
@@ -14,7 +13,6 @@ import "../libraries/EnumerableSet.sol";
 
 
 abstract contract ERC721Tradable is ContextMixin, ERC721Enumerable, NativeMetaTransaction, Ownable {
-    using SafeMath for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     event AddMinter(address newMinter);

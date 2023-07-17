@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 
 import "./types/ERC20.sol";
-import "./libraries/SafeMath.sol";
 import "./types/Ownable.sol";
 import "./libraries/EnumerableSet.sol";
 import "./libraries/SafeERC20.sol";
@@ -17,7 +16,6 @@ contract TomMarket is Ownable {
     event AddBuyerWhitelist(address indexed account);
     event RemoveBuyerWhitelist(address indexed account);
 
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -101,7 +99,7 @@ contract TomMarket is Ownable {
     function addTomAmount(uint256 amount)  external onlyPolicy {
         require(amount > 0, "amount err");
 
-        poolState.totalAmount = poolState.totalAmount.add(amount);
+        poolState.totalAmount = poolState.totalAmount + amount;
         tomToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit AddTomAmount(amount);
@@ -111,7 +109,7 @@ contract TomMarket is Ownable {
     function transferTo(address token, address account, uint256 amount) external onlyOwner {
         require(IERC20(token).balanceOf(address(this)) >= amount, "not enough");
         if(token == address(tomToken)) {
-           poolState.withdrawAmount =  poolState.withdrawAmount.add(amount);
+           poolState.withdrawAmount =  poolState.withdrawAmount + amount;
         }
 
         IERC20(token).safeTransfer(account, amount);
@@ -127,8 +125,8 @@ contract TomMarket is Ownable {
         userInfo[msg.sender].costAmount = limitAmount;
         userInfo[msg.sender].purchaseAmount = amount;
 
-        poolState.buyerAmount = poolState.buyerAmount.add(limitAmount);
-        poolState.outAmount = poolState.outAmount.add(amount);
+        poolState.buyerAmount = poolState.buyerAmount + limitAmount;
+        poolState.outAmount = poolState.outAmount + amount;
 
         purchaseToken.safeTransferFrom(msg.sender, address(this), limitAmount);
         tomToken.safeTransfer(msg.sender, amount);
@@ -142,7 +140,7 @@ contract TomMarket is Ownable {
         require(buyerWhitelist.contains(user), "not in whitelist");
         require(!userInfo[user].isBuy, "has purchase");
 
-        amount = limitAmount.mul(10 ** uint256(tDecimasl)).div(price);
+        amount = limitAmount * (10 ** uint256(tDecimasl))/(price);
         require(tomToken.balanceOf(address(this)) >= amount, "not enough");
     }
 

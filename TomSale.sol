@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 pragma experimental ABIEncoderV2;
 
 import "./types/ERC20.sol";
-import "./libraries/SafeMath.sol";
 import "./types/Ownable.sol";
 import "./libraries/EnumerableSet.sol";
 import "./libraries/SafeERC20.sol";
 import "./interfaces/IERC721.sol";
 
 contract TomSale is Ownable {
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -156,7 +154,7 @@ contract TomSale is Ownable {
 
     function setPrice(uint256 price_) external onlyPolicy {
         require(price_ > 0, "price err");
-        require(price_.div(muti) <= 1e6 || muti.div(price_) <= 1e6, "price too small or big");
+        require(price_/muti <= 1e6 || muti/(price_) <= 1e6, "price too small or big");
 
         saleInfo.price = price_;
     }
@@ -200,7 +198,7 @@ contract TomSale is Ownable {
         require(amount > 0, "amount err");
         require(poolInfo.state == 0, "has settlement");
 
-        poolInfo.totalSaleAmount = poolInfo.totalSaleAmount.add(amount);
+        poolInfo.totalSaleAmount = poolInfo.totalSaleAmount + amount;
         rewardToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit AddSaleAmount(amount);
@@ -233,7 +231,7 @@ contract TomSale is Ownable {
             require(IERC721(nft).ownerOf(tokenID) == user, "not owner");
             require(nftToInitDepositor[nft][tokenID] == user || nftToInitDepositor[nft][tokenID] == address(0), "init err");
             require(saleInfo.saleRate != 0, "not set rate");
-            value = amount.mul(saleInfo.saleRate).div(baseRate);
+            value = amount * (saleInfo.saleRate) / (baseRate);
         } else if (nft == address(0) && tokenID == 0){
             value = amount;
         } else {
@@ -242,7 +240,7 @@ contract TomSale is Ownable {
         
         require(amount >= saleInfo.perMinAmount, "too small");
 
-        require(amount.add(userInfo[user].faceValue.add(userInfo[user].noDiscountAmount)) <= saleInfo.maxAmount, "too big");
+        require(amount + (userInfo[user].faceValue + (userInfo[user].noDiscountAmount)) <= saleInfo.maxAmount, "too big");
 
         
         require(block.timestamp >= saleInfo.startTime && block.timestamp < saleInfo.endTime, "time err");
@@ -250,14 +248,14 @@ contract TomSale is Ownable {
 
     function _deposit(uint256 amount, uint256 value, uint256 tokenID) internal {
         if(tokenID != 0) {
-            userInfo[msg.sender].actualAmount = userInfo[msg.sender].actualAmount.add(value);
-            userInfo[msg.sender].faceValue = userInfo[msg.sender].faceValue.add(amount);
+            userInfo[msg.sender].actualAmount = userInfo[msg.sender].actualAmount + (value);
+            userInfo[msg.sender].faceValue = userInfo[msg.sender].faceValue + (amount);
         } else {
-            userInfo[msg.sender].noDiscountAmount = userInfo[msg.sender].noDiscountAmount.add(value);
+            userInfo[msg.sender].noDiscountAmount = userInfo[msg.sender].noDiscountAmount + (value);
         }
 
-        poolInfo.totalActualAmount = poolInfo.totalActualAmount.add(value);
-        poolInfo.totalFaceValue = poolInfo.totalFaceValue.add(amount);
+        poolInfo.totalActualAmount = poolInfo.totalActualAmount + (value);
+        poolInfo.totalFaceValue = poolInfo.totalFaceValue + (amount);
     } 
 
 
@@ -292,7 +290,7 @@ contract TomSale is Ownable {
     }
 
     function getRemain(uint256 amount) internal {
-        uint256 cost = saleInfo.price.mul(amount).div(muti);
+        uint256 cost = saleInfo.price * (amount) / (muti);
         if(cost < poolInfo.totalSaleAmount) {
             poolInfo.remainAmount = poolInfo.totalSaleAmount - cost;
         }
@@ -307,7 +305,7 @@ contract TomSale is Ownable {
         }
 
         if(cAmount > 0) {
-            userInfo[msg.sender].hasClaimAmount =  userInfo[msg.sender].hasClaimAmount.add(cAmount);
+            userInfo[msg.sender].hasClaimAmount =  (userInfo[msg.sender].hasClaimAmount + cAmount);
             if(rewardToken.balanceOf(address(this)) < cAmount) {
                 cAmount = rewardToken.balanceOf(address(this));
             }
@@ -323,7 +321,7 @@ contract TomSale is Ownable {
 
         (ethAmount, cAmount) = getETHAndUnLockAmount(user);
        
-        cAmount = cAmount.sub(userInfo[user].hasClaimAmount);
+        cAmount = cAmount - (userInfo[user].hasClaimAmount);
 
 
         require(ethAmount != 0 || cAmount != 0, "no claim");
@@ -342,10 +340,10 @@ contract TomSale is Ownable {
 
         (uint256 sTime, uint256 tTime) = getTime();
         if(block.timestamp >= saleInfo.endTime && block.timestamp < sTime) {
-            return (eAmount, cAmount.mul(unlockInfo.firstRate).div(baseRate));
+            return (eAmount, cAmount * (unlockInfo.firstRate) / (baseRate));
     
         } else if(block.timestamp >= sTime && block.timestamp < tTime) {
-            return (eAmount, cAmount.mul(unlockInfo.firstRate.add(unlockInfo.secondRate)).div(baseRate));
+            return (eAmount, cAmount * (unlockInfo.firstRate + (unlockInfo.secondRate)) / (baseRate));
 
         } else if(block.timestamp >= tTime) {
             return (eAmount, cAmount);
@@ -357,8 +355,8 @@ contract TomSale is Ownable {
     function getETHTomAmount(address user) public view returns(uint256 eAmount, uint256 tAmount) {
         
         (Cache memory c1, Cache memory c2) = getEstimateTomAmount(user);
-        eAmount = c1.returnAmount.add(c2.returnAmount);
-        tAmount = c1.tomAmount.add(c2.tomAmount);
+        eAmount = c1.returnAmount + (c2.returnAmount);
+        tAmount = c1.tomAmount + (c2.tomAmount);
         if(userInfo[user].hasClaimETH != 0) {
             eAmount = 0;
         }
@@ -376,11 +374,11 @@ contract TomSale is Ownable {
         }
 
 
-        uint256 cost = saleInfo.price.mul(poolInfo.totalFaceValue).div(muti);
+        uint256 cost = saleInfo.price * (poolInfo.totalFaceValue) / (muti);
         if(cost <= poolInfo.totalSaleAmount && (poolInfo.totalFaceValue >= saleInfo.softCap && poolInfo.totalFaceValue < saleInfo.hardCap)) {
-            c1.tomAmount = cost.mul(userInfo[user].faceValue).div(poolInfo.totalFaceValue);
+            c1.tomAmount = cost * (userInfo[user].faceValue) / (poolInfo.totalFaceValue);
 
-            c2.tomAmount = cost.mul(userInfo[user].noDiscountAmount).div(poolInfo.totalFaceValue);
+            c2.tomAmount = cost * (userInfo[user].noDiscountAmount) / (poolInfo.totalFaceValue);
             return (c1, c2);
         }
 
@@ -390,16 +388,16 @@ contract TomSale is Ownable {
         }
 
         if(userInfo[user].faceValue != 0) {
-            c1.costFaceValue = _hardCap.mul(userInfo[user].faceValue).div(poolInfo.totalFaceValue);
-            uint256 actCost = c1.costFaceValue.mul(saleInfo.saleRate).div(baseRate);
-            c1.returnAmount = userInfo[user].actualAmount.sub(actCost);
-            c1.tomAmount = saleInfo.price.mul(actCost).mul(baseRate).div(saleInfo.saleRate).div(muti);
+            c1.costFaceValue = _hardCap * (userInfo[user].faceValue) / (poolInfo.totalFaceValue);
+            uint256 actCost = c1.costFaceValue * (saleInfo.saleRate) / (baseRate);
+            c1.returnAmount = userInfo[user].actualAmount - (actCost);
+            c1.tomAmount = saleInfo.price * (actCost) * (baseRate) / (saleInfo.saleRate) / (muti);
         }
 
         if(userInfo[user].noDiscountAmount != 0) {
-            c2.costFaceValue = _hardCap.mul(userInfo[user].noDiscountAmount).div(poolInfo.totalFaceValue);
-            c2.returnAmount = userInfo[user].noDiscountAmount.sub(c2.costFaceValue);
-            c2.tomAmount = saleInfo.price.mul(c2.costFaceValue).div(muti);
+            c2.costFaceValue = _hardCap * (userInfo[user].noDiscountAmount)/ (poolInfo.totalFaceValue);
+            c2.returnAmount = userInfo[user].noDiscountAmount - (c2.costFaceValue);
+            c2.tomAmount = saleInfo.price * (c2.costFaceValue) / (muti);
         }
     }
 
@@ -414,8 +412,8 @@ contract TomSale is Ownable {
     }
 
     function getTime() public view returns(uint256 sTime, uint256 tTime) {
-        sTime = saleInfo.endTime.add(unlockInfo.secondTime);
-        tTime = sTime.add(unlockInfo.thirdTime);
+        sTime = saleInfo.endTime + (unlockInfo.secondTime);
+        tTime = sTime + (unlockInfo.thirdTime);
     }
 
     function getCurrTime() external view returns(uint256) {

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 pragma experimental ABIEncoderV2;
 
-import "./libraries/SafeMath.sol";
 import "./types/Ownable.sol";
 import "./libraries/SafeERC20.sol";
 import "./interfaces/ISwapRouter.sol";
@@ -13,7 +12,6 @@ import "./libraries/ReentrancyGuard.sol";
 contract SwapToken is Ownable, ReentrancyGuard {
     event AiTomSwapUsdt(address indexed user, uint256 amount, uint256 value);
 
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     ISwapRouter public immutable swapRouter;
@@ -87,7 +85,7 @@ contract SwapToken is Ownable, ReentrancyGuard {
         uint256 amount = IERC20(tomToken).balanceOf(address(this));
         IERC20(tomToken).safeApprove(address(swapRouter), amount);
 
-        uint256 _deadline =  block.timestamp.add(3600);
+        uint256 _deadline =  block.timestamp + 3600;
         ISwapRouter.ExactInputSingleParams memory params =
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tomToken,
@@ -103,8 +101,8 @@ contract SwapToken is Ownable, ReentrancyGuard {
 
 
         amountOut = swapRouter.exactInputSingle(params);
-        useTomAmount = useTomAmount.add(amount);
-        swapUsdt = swapUsdt.add(amountOut);
+        useTomAmount = useTomAmount + amount;
+        swapUsdt = swapUsdt + amountOut;
     }
 
     function validate(address tirgger_) public view returns(bool) {
@@ -123,7 +121,7 @@ contract SwapToken is Ownable, ReentrancyGuard {
    event TransferTo(address indexed token, address indexed account, uint256 amount);
     function transferTo(address token, address account, uint256 amount) external onlyPolicy {
         require(IERC20(token).balanceOf(address(this)) >= amount, "not enough");
-        transferAmount[token] = transferAmount[token].add(amount);
+        transferAmount[token] = transferAmount[token] + amount;
         IERC20(token).safeTransfer(account, amount);
             
         emit TransferTo(token, account, amount);
@@ -146,10 +144,10 @@ contract SwapToken is Ownable, ReentrancyGuard {
     function aiTomSwapUsdt(uint256 amount) external nonReentrant {
         uint256 value = checkSwap(msg.sender, amount);
 
-        totalBurn = totalBurn.add(amount);
-        totalSwapUsdt = totalSwapUsdt.add(value);
-        userInfo[msg.sender].costTom = userInfo[msg.sender].costTom.add(amount);
-        userInfo[msg.sender].getUsdt = userInfo[msg.sender].getUsdt.add(value);
+        totalBurn = totalBurn + amount;
+        totalSwapUsdt = totalSwapUsdt + value;
+        userInfo[msg.sender].costTom = userInfo[msg.sender].costTom + amount;
+        userInfo[msg.sender].getUsdt = userInfo[msg.sender].getUsdt + value;
 
         IERC20(tomToken).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(tomToken).burn(amount);
@@ -164,7 +162,7 @@ contract SwapToken is Ownable, ReentrancyGuard {
         uint256 total = getTokenTotalSupply(tomToken);
         uint256 uValue = getContractBalance(USDT);
         require(total > 0 && uValue > 0, "swap err");
-        uint256 value = amount.mul(uValue).div(total);
+        uint256 value = amount * uValue / total;
 
         return value;
     }
@@ -177,7 +175,7 @@ contract SwapToken is Ownable, ReentrancyGuard {
             return (0, 0);
         }
 
-        uint256 value = userTom.mul(uValue).div(total);
+        uint256 value = userTom * uValue / total;
         return (userTom, value);
     }
 }
