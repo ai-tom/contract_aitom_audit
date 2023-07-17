@@ -61,17 +61,26 @@ contract SwapToken is Ownable, ReentrancyGuard {
 
     
     function setOperator(address op) external onlyOwner {
+        require(msg.sender == owner(), "not permission");
         operator = op;
         emit SetOperator(op);
     }
 
     
     function setTirgger(address tirgger_) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         tirgger = tirgger_;
         emit SetTirgger(tirgger_);
     }
 
     function setAddV3Pool(IUniswapV3Pool lpToken_) external  onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(
             (lpToken_.token0() == tomToken || lpToken_.token0() == USDT) &&
             (lpToken_.token1() == tomToken || lpToken_.token1() == USDT),
@@ -84,6 +93,10 @@ contract SwapToken is Ownable, ReentrancyGuard {
     }
 
     function setTomTrgAmount(uint256 amount) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(amount > 0, "amount err");
         tomTrgAmount = amount;
         emit SetTomTrgAmount(amount);
@@ -130,6 +143,10 @@ contract SwapToken is Ownable, ReentrancyGuard {
 
    event TransferTo(address indexed token, address indexed account, uint256 amount);
     function transferTo(address token, address account, uint256 amount) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(IERC20(token).balanceOf(address(this)) >= amount, "not enough");
         transferAmount[token] = transferAmount[token] + amount;
         IERC20(token).safeTransfer(account, amount);

@@ -82,23 +82,36 @@ contract TomMarket is Ownable {
 
 
     function setOperator(address op) external onlyOwner {
+        require(msg.sender == owner(), "not permission");
         operator = op;
         emit SetOperator(op);
     }
 
     function setPrice(uint256 price_) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(price > 0, "price err");
         price = price_;
         emit SetPrice(price_);
     }
 
     function setLimitAmount(uint256 limitAmount_)  external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(limitAmount_ > 0, "limitAmount_ err");
         limitAmount = limitAmount_;
         emit SetLimitAmount(limitAmount_);
     }
 
     function setMaxUserNumber(uint256 newNum) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(newNum > 0, "newNum err");
         maxUserNumber = newNum;
         emit SetMaxUserNumber(newNum);
@@ -116,6 +129,7 @@ contract TomMarket is Ownable {
 
 
     function transferTo(address token, address account, uint256 amount) external onlyOwner {
+        require(msg.sender == owner(), "not permission");
         require(IERC20(token).balanceOf(address(this)) >= amount, "not enough");
         if(token == address(tomToken)) {
            poolState.withdrawAmount =  poolState.withdrawAmount + amount;
@@ -156,6 +170,10 @@ contract TomMarket is Ownable {
 
 
     function addOremoveBuyerWhitelist(address[] memory accounts, bool isAdd) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
             if(isAdd) {
                 addBuyerWhitelist(accounts);
             } else {

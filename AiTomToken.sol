@@ -74,36 +74,55 @@ contract AiTomToken is ERC20, Ownable {
 
     
     function setOperator(address op) external onlyOwner {
-        //missing required function.
+        require(msg.sender == owner(), "not permission");
         operator = op;
         emit SetOperator(op);
     }
 
     function setEcologicalPromoter(address ecologicalPromoter_) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(ecologicalPromoter_ != address(0),"address err");
         ecologicalPromoter = ecologicalPromoter_;
         emit SetEcologicalPromoter(ecologicalPromoter_);
     }
 
     function setProductMaintenance(address productMaintenance_) external onlyPolicy {
-        //missing required function
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         productMaintenance = productMaintenance_;
         emit SetProductMaintenance(productMaintenance_);
     }
 
     function setInsuredPool(address insuredPool_) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(insuredPool_ != address(0), "address err");
         insuredPool = insuredPool_;
         emit SetInsuredPool(insuredPool_);
     }
 
     function setTaxRate(uint256 rate) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(rate < baseRate && rate <= maxRate, "rate err");
         taxRate = rate;
         emit SetTaxRate(rate);
     }
 
     function setRate(uint256 eRate, uint256 pRate, uint256 iRate) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require((eRate + pRate+ iRate) == baseRate, "rate err");
 
         ecologicalPromoterRate = eRate;
@@ -114,6 +133,10 @@ contract AiTomToken is ERC20, Ownable {
 
 
     function addOremoveTeamlist(address[] memory accounts, bool isAdd) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         //missing required
         if(isAdd) {
             addTTeamlist(accounts);
@@ -145,7 +168,10 @@ contract AiTomToken is ERC20, Ownable {
 
 
     function addOremoveSenderWhitelist(address[] memory accounts, bool isAdd) external onlyPolicy {
-        //missing required
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         if(isAdd) {
             addSenderWhitelist(accounts);
         } else {
@@ -176,7 +202,10 @@ contract AiTomToken is ERC20, Ownable {
 
 
     function addOremoveRecipientWhitelist(address[] memory accounts, bool isAdd) external onlyPolicy {
-        //missing require
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         if(isAdd) {
             addRecipientWhitelist(accounts);
         } else {

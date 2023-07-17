@@ -130,11 +130,16 @@ contract TomSale is Ownable {
 
     
     function setOperator(address op) external onlyOwner {
+        require(msg.sender == owner(), "not permission");
         operator = op;
         emit SetOperator(op);
     }
 
     function addOrRemoveNftToken(address[] memory accounts, bool isAdd) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         if(isAdd) {
             addNftToken(accounts);
         } else {
@@ -164,6 +169,10 @@ contract TomSale is Ownable {
     }
 
     function setPrice(uint256 price_) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(price_ > 0, "price err");
         require(price_/muti <= 1e6 || muti/(price_) <= 1e6, "price too small or big");
 
@@ -173,6 +182,10 @@ contract TomSale is Ownable {
     
 
     function delyEndTime(uint256 time) external onlyPolicy notEnd {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(time > saleInfo.endTime, "time err");
 
         saleInfo.endTime = time;
@@ -180,6 +193,10 @@ contract TomSale is Ownable {
     }
 
     function setSaleRate(uint256 rate) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(rate > 0 && rate < baseRate, "rate err");
         require(poolInfo.totalActualAmount == 0, "has some deposit");
 
@@ -188,6 +205,10 @@ contract TomSale is Ownable {
     }
 
     function setCap(uint256 softCap_, uint256 hardCap_) external onlyPolicy notEnd {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(softCap_ > 0 && hardCap_ > softCap_, "cap err");
 
         saleInfo.softCap = softCap_;
@@ -196,6 +217,10 @@ contract TomSale is Ownable {
     }
 
     function setSaleMinMaxAmount(uint256 min, uint256 max) external onlyPolicy notEnd {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(min > 0 && max > min, "set amount err");
 
         saleInfo.perMinAmount = min;
@@ -204,6 +229,10 @@ contract TomSale is Ownable {
     }
 
     function setPeriod(uint256 secondTime_, uint256 thirdTime_) external onlyPolicy notEnd {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(secondTime_ > 0 && thirdTime_ > 0, "time err");
 
         unlockInfo.secondTime = secondTime_;
@@ -212,6 +241,10 @@ contract TomSale is Ownable {
     }
 
     function addSaleAmount(uint256 amount)  external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         require(amount > 0, "amount err");
         require(poolInfo.state == 0, "has settlement");
 
@@ -465,6 +498,10 @@ contract TomSale is Ownable {
     }
 
     function receivieETH(uint256 amount) external onlyPolicy {
+        require(
+            msg.sender == operator || msg.sender == owner(), 
+            "not permission"
+        );
         payable(msg.sender).transfer(amount);
         emit ReceivieETH(amount);
     }
