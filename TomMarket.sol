@@ -15,6 +15,11 @@ contract TomMarket is Ownable {
     event Purchase(address indexed user, uint256 cost, uint256 amount);
     event AddBuyerWhitelist(address indexed account);
     event RemoveBuyerWhitelist(address indexed account);
+    event AddOremoveBuyerWhitelist(address[] accounts, bool isAdd);
+    event SetMaxUserNumber(uint256 newNum);
+    event SetLimitAmount(uint256 limitAmount);
+    event SetPrice(uint256 price);
+    event SetOperator(address op);
 
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -78,21 +83,25 @@ contract TomMarket is Ownable {
 
     function setOperator(address op) external onlyOwner {
         operator = op;
+        emit SetOperator(op);
     }
 
     function setPrice(uint256 price_) external onlyPolicy {
         require(price > 0, "price err");
         price = price_;
+        emit SetPrice(price_);
     }
 
     function setLimitAmount(uint256 limitAmount_)  external onlyPolicy {
         require(limitAmount_ > 0, "limitAmount_ err");
         limitAmount = limitAmount_;
+        emit SetLimitAmount(limitAmount_);
     }
 
     function setMaxUserNumber(uint256 newNum) external onlyPolicy {
         require(newNum > 0, "newNum err");
         maxUserNumber = newNum;
+        emit SetMaxUserNumber(newNum);
     }
 
 
@@ -152,6 +161,7 @@ contract TomMarket is Ownable {
             } else {
                 removeBuyerWhitelist(accounts);
             }
+            emit AddOremoveBuyerWhitelist(accounts, isAdd);
         }
 
         function addBuyerWhitelist(address[] memory accounts) internal {

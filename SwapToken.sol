@@ -11,6 +11,11 @@ import "./libraries/ReentrancyGuard.sol";
 
 contract SwapToken is Ownable, ReentrancyGuard {
     event AiTomSwapUsdt(address indexed user, uint256 amount, uint256 value);
+    event SwapExactInputSingle(uint256 amount);
+    event SetTomTrgAmount(uint256 amount);
+    event SetAddV3Pool(IUniswapV3Pool lpToken);
+    event SetTirgger(address tirgger);
+    event SetOperator(address op);
 
     using SafeERC20 for IERC20;
 
@@ -57,11 +62,13 @@ contract SwapToken is Ownable, ReentrancyGuard {
     
     function setOperator(address op) external onlyOwner {
         operator = op;
+        emit SetOperator(op);
     }
 
     
     function setTirgger(address tirgger_) external onlyPolicy {
         tirgger = tirgger_;
+        emit SetTirgger(tirgger_);
     }
 
     function setAddV3Pool(IUniswapV3Pool lpToken_) external  onlyPolicy {
@@ -73,11 +80,13 @@ contract SwapToken is Ownable, ReentrancyGuard {
 
 
         lpToken = lpToken_;
+        emit SetAddV3Pool(lpToken_);
     }
 
     function setTomTrgAmount(uint256 amount) external onlyPolicy {
         require(amount > 0, "amount err");
         tomTrgAmount = amount;
+        emit SetTomTrgAmount(amount);
     }
 
     function swapExactInputSingle() external returns (uint256 amountOut) {
@@ -103,6 +112,7 @@ contract SwapToken is Ownable, ReentrancyGuard {
         amountOut = swapRouter.exactInputSingle(params);
         useTomAmount = useTomAmount + amount;
         swapUsdt = swapUsdt + amountOut;
+        emit SwapExactInputSingle(amountOut);
     }
 
     function validate(address tirgger_) public view returns(bool) {

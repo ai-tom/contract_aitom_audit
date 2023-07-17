@@ -20,6 +20,15 @@ contract TomSale is Ownable {
     event ClaimReamin(address indexed account, uint256 amount);
     event AddNftToken(address account);
     event RemoveNftToken(address account);
+    event SetOperator(address account);
+    event AddOrRemoveNftToken(address[] accounts, bool isAdd);
+    event SetPrice(uint256 price);
+    event DelyEndTime(uint256 price);
+    event SetSaleRate(uint256 price);
+    event SetCap(uint256 softCap, uint256 hardCap);
+    event SetSaleMinMaxAmount(uint256 softCap, uint256 hardCap);
+    event SetPeriod(uint256 secondTime, uint256 thirdTime);
+    event ReceivieETH(uint256 amount);
 
     struct SaleInfo {
         uint256 startTime;
@@ -122,6 +131,7 @@ contract TomSale is Ownable {
     
     function setOperator(address op) external onlyOwner {
         operator = op;
+        emit SetOperator(op);
     }
 
     function addOrRemoveNftToken(address[] memory accounts, bool isAdd) external onlyPolicy {
@@ -130,6 +140,7 @@ contract TomSale is Ownable {
         } else {
             removeNftToken(accounts);
         }
+        emit AddOrRemoveNftToken(accounts, isAdd);
     }
 
 
@@ -157,6 +168,7 @@ contract TomSale is Ownable {
         require(price_/muti <= 1e6 || muti/(price_) <= 1e6, "price too small or big");
 
         saleInfo.price = price_;
+        emit SetPrice(price_);
     }
     
 
@@ -164,6 +176,7 @@ contract TomSale is Ownable {
         require(time > saleInfo.endTime, "time err");
 
         saleInfo.endTime = time;
+        emit DelyEndTime(time);
     }
 
     function setSaleRate(uint256 rate) external onlyPolicy {
@@ -171,6 +184,7 @@ contract TomSale is Ownable {
         require(poolInfo.totalActualAmount == 0, "has some deposit");
 
         saleInfo.saleRate = rate;
+        emit SetSaleRate(rate);
     }
 
     function setCap(uint256 softCap_, uint256 hardCap_) external onlyPolicy notEnd {
@@ -178,6 +192,7 @@ contract TomSale is Ownable {
 
         saleInfo.softCap = softCap_;
         saleInfo.hardCap = hardCap_;
+        emit SetCap(softCap_ ,hardCap_);
     }
 
     function setSaleMinMaxAmount(uint256 min, uint256 max) external onlyPolicy notEnd {
@@ -185,6 +200,7 @@ contract TomSale is Ownable {
 
         saleInfo.perMinAmount = min;
         saleInfo.maxAmount = max;
+        emit SetSaleMinMaxAmount(min ,max);
     }
 
     function setPeriod(uint256 secondTime_, uint256 thirdTime_) external onlyPolicy notEnd {
@@ -192,6 +208,7 @@ contract TomSale is Ownable {
 
         unlockInfo.secondTime = secondTime_;
         unlockInfo.thirdTime = thirdTime_;
+        emit SetPeriod(secondTime_, thirdTime_);
     }
 
     function addSaleAmount(uint256 amount)  external onlyPolicy {
@@ -449,6 +466,7 @@ contract TomSale is Ownable {
 
     function receivieETH(uint256 amount) external onlyPolicy {
         payable(msg.sender).transfer(amount);
+        emit ReceivieETH(amount);
     }
 
 
